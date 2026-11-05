@@ -1,4 +1,5 @@
 import { AlertTriangle, CheckCircle2, Clock, HelpCircle, Loader2, ShieldAlert, ShieldCheck, ShieldQuestion, XCircle } from "lucide-react";
+import type { ReactNode } from "react";
 import type { RiskLevel, TransferStatus, VerificationStatus } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -10,7 +11,7 @@ const tone = {
   muted: "bg-muted text-muted-foreground",
 };
 
-function Pill({ t, icon: Icon, children, className }: { t: keyof typeof tone; icon?: typeof Clock; children: React.ReactNode; className?: string }) {
+function Pill({ t, icon: Icon, children, className }: { t: keyof typeof tone; icon?: typeof Clock; children: ReactNode; className?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium", tone[t], className)}>
       {Icon && <Icon className="size-3.5" />}
