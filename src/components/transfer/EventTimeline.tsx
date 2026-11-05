@@ -1,4 +1,5 @@
 import { Ban, CheckCircle2, Clock, FilePlus2, Send, ShieldCheck, UserCheck } from "lucide-react";
+import type { ReactNode } from "react";
 import type { TransferEvent } from "@/types";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -13,7 +14,7 @@ const icons = {
   cancelled: [Ban, "bg-danger-soft text-danger"],
 } as const;
 
-export function EventTimeline({ events, extra }: { events: TransferEvent[]; extra?: (e: TransferEvent) => React.ReactNode }) {
+export function EventTimeline({ events, extra }: { events: TransferEvent[]; extra?: (e: TransferEvent) => ReactNode }) {
   return (
     <ol className="relative space-y-4 before:absolute before:top-2 before:bottom-2 before:left-3.5 before:w-px before:bg-border">
       {events.map((e) => {
