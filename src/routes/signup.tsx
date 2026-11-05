@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 import { AuthLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { authService } from "@/services/auth";
-import { Field } from "./login";
+import { Field } from "@/components/common/Field";
 
 const schema = z
   .object({
@@ -33,7 +33,7 @@ function SignupPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const r = schema.safeParse(Object.fromEntries(new FormData(e.currentTarget)));
     if (!r.success) return setErrors(Object.fromEntries(r.error.issues.map((i) => [i.path[0], i.message])));

@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 import { AuthLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/common/Field";
 import { authService } from "@/services/auth";
 
 const schema = z.object({
@@ -32,7 +31,7 @@ function LoginPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = Object.fromEntries(new FormData(e.currentTarget));
     const r = schema.safeParse(fd);
@@ -59,15 +58,5 @@ function LoginPage() {
         <p className="text-center text-xs text-muted-foreground">Prototype: any email and 8+ character password works.</p>
       </form>
     </AuthLayout>
-  );
-}
-
-export function Field({ id, label, error, ...props }: { id: string; label: string; error?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <div className="space-y-1.5">
-      <Label htmlFor={id}>{label}</Label>
-      <Input id={id} name={id} aria-invalid={!!error} className="h-11 bg-card aria-invalid:border-danger" {...props} />
-      {error && <p className="text-xs text-danger">{error}</p>}
-    </div>
   );
 }
