@@ -10,33 +10,143 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ShellRouteRouteImport } from './routes/_shell/route'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as ShellDashboardRouteImport } from './routes/_shell/dashboard'
+import { Route as ShellSendRouteImport } from './routes/_shell/send'
+import { Route as ShellTransfersIdPendingRouteImport } from './routes/_shell/transfers.$id.pending'
+import { Route as ShellTransfersIdReviewRouteImport } from './routes/_shell/transfers.$id.review'
+import { Route as ShellTransfersIdRiskRouteImport } from './routes/_shell/transfers.$id.risk'
+import { Route as ShellTransfersIdVerifyRouteImport } from './routes/_shell/transfers.$id.verify'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShellRouteRoute = ShellRouteRouteImport.update({
+  id: '/_shell',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShellDashboardRoute = ShellDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => ShellRouteRoute,
+} as any)
+const ShellSendRoute = ShellSendRouteImport.update({
+  id: '/send',
+  path: '/send',
+  getParentRoute: () => ShellRouteRoute,
+} as any)
+const ShellTransfersIdPendingRoute = ShellTransfersIdPendingRouteImport.update({
+  id: '/transfers/$id/pending',
+  path: '/transfers/$id/pending',
+  getParentRoute: () => ShellRouteRoute,
+} as any)
+const ShellTransfersIdReviewRoute = ShellTransfersIdReviewRouteImport.update({
+  id: '/transfers/$id/review',
+  path: '/transfers/$id/review',
+  getParentRoute: () => ShellRouteRoute,
+} as any)
+const ShellTransfersIdRiskRoute = ShellTransfersIdRiskRouteImport.update({
+  id: '/transfers/$id/risk',
+  path: '/transfers/$id/risk',
+  getParentRoute: () => ShellRouteRoute,
+} as any)
+const ShellTransfersIdVerifyRoute = ShellTransfersIdVerifyRouteImport.update({
+  id: '/transfers/$id/verify',
+  path: '/transfers/$id/verify',
+  getParentRoute: () => ShellRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/dashboard': typeof ShellDashboardRoute
+  '/send': typeof ShellSendRoute
+  '/transfers/$id/pending': typeof ShellTransfersIdPendingRoute
+  '/transfers/$id/review': typeof ShellTransfersIdReviewRoute
+  '/transfers/$id/risk': typeof ShellTransfersIdRiskRoute
+  '/transfers/$id/verify': typeof ShellTransfersIdVerifyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/dashboard': typeof ShellDashboardRoute
+  '/send': typeof ShellSendRoute
+  '/transfers/$id/pending': typeof ShellTransfersIdPendingRoute
+  '/transfers/$id/review': typeof ShellTransfersIdReviewRoute
+  '/transfers/$id/risk': typeof ShellTransfersIdRiskRoute
+  '/transfers/$id/verify': typeof ShellTransfersIdVerifyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_shell': typeof ShellRouteRouteWithChildren
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/_shell/dashboard': typeof ShellDashboardRoute
+  '/_shell/send': typeof ShellSendRoute
+  '/_shell/transfers/$id/pending': typeof ShellTransfersIdPendingRoute
+  '/_shell/transfers/$id/review': typeof ShellTransfersIdReviewRoute
+  '/_shell/transfers/$id/risk': typeof ShellTransfersIdRiskRoute
+  '/_shell/transfers/$id/verify': typeof ShellTransfersIdVerifyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/signup'
+    | '/dashboard'
+    | '/send'
+    | '/transfers/$id/pending'
+    | '/transfers/$id/review'
+    | '/transfers/$id/risk'
+    | '/transfers/$id/verify'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/signup'
+    | '/dashboard'
+    | '/send'
+    | '/transfers/$id/pending'
+    | '/transfers/$id/review'
+    | '/transfers/$id/risk'
+    | '/transfers/$id/verify'
+  id:
+    | '__root__'
+    | '/'
+    | '/_shell'
+    | '/login'
+    | '/signup'
+    | '/_shell/dashboard'
+    | '/_shell/send'
+    | '/_shell/transfers/$id/pending'
+    | '/_shell/transfers/$id/review'
+    | '/_shell/transfers/$id/risk'
+    | '/_shell/transfers/$id/verify'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ShellRouteRoute: typeof ShellRouteRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +158,99 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_shell': {
+      id: '/_shell'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof ShellRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_shell/dashboard': {
+      id: '/_shell/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof ShellDashboardRouteImport
+      parentRoute: typeof ShellRouteRoute
+    }
+    '/_shell/send': {
+      id: '/_shell/send'
+      path: '/send'
+      fullPath: '/send'
+      preLoaderRoute: typeof ShellSendRouteImport
+      parentRoute: typeof ShellRouteRoute
+    }
+    '/_shell/transfers/$id/pending': {
+      id: '/_shell/transfers/$id/pending'
+      path: '/transfers/$id/pending'
+      fullPath: '/transfers/$id/pending'
+      preLoaderRoute: typeof ShellTransfersIdPendingRouteImport
+      parentRoute: typeof ShellRouteRoute
+    }
+    '/_shell/transfers/$id/review': {
+      id: '/_shell/transfers/$id/review'
+      path: '/transfers/$id/review'
+      fullPath: '/transfers/$id/review'
+      preLoaderRoute: typeof ShellTransfersIdReviewRouteImport
+      parentRoute: typeof ShellRouteRoute
+    }
+    '/_shell/transfers/$id/risk': {
+      id: '/_shell/transfers/$id/risk'
+      path: '/transfers/$id/risk'
+      fullPath: '/transfers/$id/risk'
+      preLoaderRoute: typeof ShellTransfersIdRiskRouteImport
+      parentRoute: typeof ShellRouteRoute
+    }
+    '/_shell/transfers/$id/verify': {
+      id: '/_shell/transfers/$id/verify'
+      path: '/transfers/$id/verify'
+      fullPath: '/transfers/$id/verify'
+      preLoaderRoute: typeof ShellTransfersIdVerifyRouteImport
+      parentRoute: typeof ShellRouteRoute
+    }
   }
 }
 
+interface ShellRouteRouteChildren {
+  ShellDashboardRoute: typeof ShellDashboardRoute
+  ShellSendRoute: typeof ShellSendRoute
+  ShellTransfersIdPendingRoute: typeof ShellTransfersIdPendingRoute
+  ShellTransfersIdReviewRoute: typeof ShellTransfersIdReviewRoute
+  ShellTransfersIdRiskRoute: typeof ShellTransfersIdRiskRoute
+  ShellTransfersIdVerifyRoute: typeof ShellTransfersIdVerifyRoute
+}
+
+const ShellRouteRouteChildren: ShellRouteRouteChildren = {
+  ShellDashboardRoute: ShellDashboardRoute,
+  ShellSendRoute: ShellSendRoute,
+  ShellTransfersIdPendingRoute: ShellTransfersIdPendingRoute,
+  ShellTransfersIdReviewRoute: ShellTransfersIdReviewRoute,
+  ShellTransfersIdRiskRoute: ShellTransfersIdRiskRoute,
+  ShellTransfersIdVerifyRoute: ShellTransfersIdVerifyRoute,
+}
+
+const ShellRouteRouteWithChildren = ShellRouteRoute._addFileChildren(
+  ShellRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ShellRouteRoute: ShellRouteRouteWithChildren,
+  LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
