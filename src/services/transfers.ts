@@ -97,14 +97,14 @@ export const transferService = {
       if (!t.risk) throw new Error("Run the risk assessment first.");
       const hold = holdSecondsFor(t.risk.level);
       const confirmedAt = now();
+      const c = { ...t, events: [...t.events, event("confirmed", "Transfer confirmed.")] };
       if (hold === 0) {
-        const c = applyTransition(t, "completed", event("confirmed", "Transfer confirmed."), { confirmedAt });
-        return applyTransition({ ...c, status: "draft" }, "completed", event("released", "Released to recipient (simulated)."), {
+        return applyTransition(c, "completed", event("released", "Released to recipient (simulated)."), {
+          confirmedAt,
           completedAt: confirmedAt,
         });
       }
       const releaseAt = new Date(Date.now() + hold * 1000).toISOString();
-      const c = { ...t, events: [...t.events, event("confirmed", "Transfer confirmed.")] };
       return applyTransition(c, "pending", event("hold_started", `Cancellation window started (${hold}s).`), {
         confirmedAt,
         releaseAt,
