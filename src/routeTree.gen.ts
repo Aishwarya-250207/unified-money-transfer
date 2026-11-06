@@ -14,6 +14,8 @@ import { Route as ShellRouteRouteImport } from './routes/_shell/route'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ShellDashboardRouteImport } from './routes/_shell/dashboard'
+import { Route as ShellHistoryRouteImport } from './routes/_shell/history'
+import { Route as ShellSecurityRouteImport } from './routes/_shell/security'
 import { Route as ShellSendRouteImport } from './routes/_shell/send'
 import { Route as ShellTransfersIdPendingRouteImport } from './routes/_shell/transfers.$id.pending'
 import { Route as ShellTransfersIdReviewRouteImport } from './routes/_shell/transfers.$id.review'
@@ -42,6 +44,16 @@ const SignupRoute = SignupRouteImport.update({
 const ShellDashboardRoute = ShellDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => ShellRouteRoute,
+} as any)
+const ShellHistoryRoute = ShellHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => ShellRouteRoute,
+} as any)
+const ShellSecurityRoute = ShellSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
   getParentRoute: () => ShellRouteRoute,
 } as any)
 const ShellSendRoute = ShellSendRouteImport.update({
@@ -75,6 +87,8 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/dashboard': typeof ShellDashboardRoute
+  '/history': typeof ShellHistoryRoute
+  '/security': typeof ShellSecurityRoute
   '/send': typeof ShellSendRoute
   '/transfers/$id/pending': typeof ShellTransfersIdPendingRoute
   '/transfers/$id/review': typeof ShellTransfersIdReviewRoute
@@ -86,6 +100,8 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/dashboard': typeof ShellDashboardRoute
+  '/history': typeof ShellHistoryRoute
+  '/security': typeof ShellSecurityRoute
   '/send': typeof ShellSendRoute
   '/transfers/$id/pending': typeof ShellTransfersIdPendingRoute
   '/transfers/$id/review': typeof ShellTransfersIdReviewRoute
@@ -99,6 +115,8 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/_shell/dashboard': typeof ShellDashboardRoute
+  '/_shell/history': typeof ShellHistoryRoute
+  '/_shell/security': typeof ShellSecurityRoute
   '/_shell/send': typeof ShellSendRoute
   '/_shell/transfers/$id/pending': typeof ShellTransfersIdPendingRoute
   '/_shell/transfers/$id/review': typeof ShellTransfersIdReviewRoute
@@ -112,6 +130,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/dashboard'
+    | '/history'
+    | '/security'
     | '/send'
     | '/transfers/$id/pending'
     | '/transfers/$id/review'
@@ -123,6 +143,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/dashboard'
+    | '/history'
+    | '/security'
     | '/send'
     | '/transfers/$id/pending'
     | '/transfers/$id/review'
@@ -135,6 +157,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/_shell/dashboard'
+    | '/_shell/history'
+    | '/_shell/security'
     | '/_shell/send'
     | '/_shell/transfers/$id/pending'
     | '/_shell/transfers/$id/review'
@@ -186,6 +210,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellDashboardRouteImport
       parentRoute: typeof ShellRouteRoute
     }
+    '/_shell/history': {
+      id: '/_shell/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof ShellHistoryRouteImport
+      parentRoute: typeof ShellRouteRoute
+    }
+    '/_shell/security': {
+      id: '/_shell/security'
+      path: '/security'
+      fullPath: '/security'
+      preLoaderRoute: typeof ShellSecurityRouteImport
+      parentRoute: typeof ShellRouteRoute
+    }
     '/_shell/send': {
       id: '/_shell/send'
       path: '/send'
@@ -226,6 +264,8 @@ declare module '@tanstack/react-router' {
 
 interface ShellRouteRouteChildren {
   ShellDashboardRoute: typeof ShellDashboardRoute
+  ShellHistoryRoute: typeof ShellHistoryRoute
+  ShellSecurityRoute: typeof ShellSecurityRoute
   ShellSendRoute: typeof ShellSendRoute
   ShellTransfersIdPendingRoute: typeof ShellTransfersIdPendingRoute
   ShellTransfersIdReviewRoute: typeof ShellTransfersIdReviewRoute
@@ -235,6 +275,8 @@ interface ShellRouteRouteChildren {
 
 const ShellRouteRouteChildren: ShellRouteRouteChildren = {
   ShellDashboardRoute: ShellDashboardRoute,
+  ShellHistoryRoute: ShellHistoryRoute,
+  ShellSecurityRoute: ShellSecurityRoute,
   ShellSendRoute: ShellSendRoute,
   ShellTransfersIdPendingRoute: ShellTransfersIdPendingRoute,
   ShellTransfersIdReviewRoute: ShellTransfersIdReviewRoute,
