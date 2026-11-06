@@ -14,7 +14,7 @@ export function PageHeader({ title, description, actions }: { title: string; des
   );
 }
 
-export function Panel({ className, children }: { className?: string; children: ReactNode }) {
+export function Panel({ className, children }: { className?: string; children?: ReactNode }) {
   return <div className={cn("surface p-6", className)}>{children}</div>;
 }
 
