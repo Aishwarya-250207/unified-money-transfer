@@ -3,6 +3,7 @@ import { assessRisk, levelFor } from "./risk";
 import type { RecipientVerification, Transfer } from "@/types";
 
 const verified: RecipientVerification = {
+  email: "ana@example.com",
   status: "verified",
   expectedName: "Ana Rao",
   confirmedName: "Ana Rao",
@@ -41,7 +42,7 @@ describe("risk scoring", () => {
   it("flags an unregistered recipient at weight 40", () => {
     const r = assessRisk({
       ...base,
-      verification: { status: "not_found", expectedName: "Ana Rao" },
+      verification: { email: "ana@example.com", status: "not_found", expectedName: "Ana Rao" },
     });
     const f = r.factors.find((x) => x.id === "not_found");
     expect(f?.weight).toBe(40);
@@ -50,7 +51,7 @@ describe("risk scoring", () => {
   it("flags a name mismatch at weight 35", () => {
     const r = assessRisk({
       ...base,
-      verification: { status: "mismatch", expectedName: "Ana Rao", confirmedName: "Bob" },
+      verification: { email: "ana@example.com", status: "mismatch", expectedName: "Ana Rao", confirmedName: "Bob" },
     });
     expect(r.factors.find((x) => x.id === "mismatch")?.weight).toBe(35);
   });
@@ -72,7 +73,7 @@ describe("risk scoring", () => {
       ...base,
       amount: 5000,
       note: "urgent crypto deposit",
-      verification: { status: "not_found", expectedName: "X", accountAgeDays: 2 },
+      verification: { email: "ana@example.com", status: "not_found", expectedName: "X", accountAgeDays: 2 },
     });
     expect(r.score).toBeLessThanOrEqual(100);
   });
