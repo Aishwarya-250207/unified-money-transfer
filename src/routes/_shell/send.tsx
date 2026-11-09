@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { toast } from "sonner";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Info } from "lucide-react";
 import { z } from "zod";
@@ -39,11 +40,12 @@ function SendPage() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const r = schema.safeParse(Object.fromEntries(new FormData(e.currentTarget)));
     if (!r.success) return setErrors(Object.fromEntries(r.error.issues.map((i) => [i.path[0], i.message])));
-    const t = transferService.createDraft({ ...r.data, currency });
+    let t;
+    try { t = await transferService.createDraft({ ...r.data, currency }); } catch (err) { toast.error((err as Error).message); return; }
     navigate({ to: "/transfers/$id/verify", params: { id: t.id } });
   }
 

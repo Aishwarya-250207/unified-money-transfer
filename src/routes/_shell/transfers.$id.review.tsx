@@ -49,7 +49,7 @@ function Review({ t }: { t: Transfer }) {
     setBusy(true);
     await new Promise((r) => setTimeout(r, 700));
     try {
-      const next = transferService.confirm(t.id);
+      const next = await transferService.confirm(t.id);
       if (next.status === "pending") navigate({ to: "/transfers/$id/pending", params: { id: t.id } });
       else { toast.success("Transfer completed (simulated)."); navigate({ to: "/history" }); }
     } catch (e) {
@@ -58,8 +58,8 @@ function Review({ t }: { t: Transfer }) {
     }
   }
 
-  function cancel() {
-    transferService.cancel(t.id, "Cancelled by sender at review.");
+  async function cancel() {
+    try { await transferService.cancel(t.id, "Cancelled by sender at review."); } catch (e) { toast.error((e as Error).message); return; }
     toast("Transfer cancelled. Nothing was sent.");
     navigate({ to: "/dashboard" });
   }

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { toast } from "sonner";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Lightbulb, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,7 @@ function Risk({ t }: { t: Transfer }) {
   const verificationDone = t.verification.status !== "pending";
 
   useEffect(() => {
-    if (verificationDone && !t.risk) transferService.assess(t.id);
+    if (verificationDone && !t.risk) transferService.assess(t.id).catch((e) => toast.error((e as Error).message));
   }, [verificationDone, t.risk, t.id]);
 
   if (!verificationDone)

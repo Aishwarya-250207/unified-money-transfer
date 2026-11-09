@@ -46,7 +46,7 @@ export function TransferDetailSheet({ id, onClose }: { id: string | null; onClos
                   <Button asChild variant="outline" className="flex-1">
                     <Link to="/transfers/$id/pending" params={{ id: t.id }}>View countdown</Link>
                   </Button>
-                  <Button variant="danger" className="flex-1" onClick={() => { transferService.cancel(t.id); toast.success("Transfer cancelled (simulated)."); }}>
+                  <Button variant="danger" className="flex-1" onClick={() => { transferService.cancel(t.id).then(() => toast.success("Transfer cancelled (simulated)."), (e) => toast.error((e as Error).message)); }}>
                     Cancel transfer
                   </Button>
                 </div>
