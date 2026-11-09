@@ -38,7 +38,12 @@ function LoginPage() {
     if (!r.success) return setErrors(Object.fromEntries(r.error.issues.map((i) => [i.path[0], i.message])));
     setErrors({});
     setLoading(true);
-    await authService.signIn(r.data.email, r.data.password);
+    try {
+      await authService.signIn(r.data.email, r.data.password);
+    } catch (err) {
+      setLoading(false);
+      return setErrors({ password: err instanceof Error ? err.message : "Login failed" });
+    }
     const safe = redirect?.startsWith("/") && !redirect.startsWith("//") ? redirect : "/dashboard";
     navigate({ to: safe });
   }
@@ -55,7 +60,6 @@ function LoginPage() {
         <Button type="submit" variant="default" size="xl" className="w-full" disabled={loading}>
           {loading && <Loader2 className="animate-spin" />} Log in
         </Button>
-        <p className="text-center text-xs text-muted-foreground">Prototype: any email and 8+ character password works.</p>
       </form>
     </AuthLayout>
   );

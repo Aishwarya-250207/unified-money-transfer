@@ -39,7 +39,12 @@ function SignupPage() {
     if (!r.success) return setErrors(Object.fromEntries(r.error.issues.map((i) => [i.path[0], i.message])));
     setErrors({});
     setLoading(true);
-    await authService.signUp(r.data.name, r.data.email, r.data.password);
+    try {
+      await authService.signUp(r.data.name, r.data.email, r.data.password);
+    } catch (err) {
+      setLoading(false);
+      return setErrors({ email: err instanceof Error ? err.message : "Sign up failed" });
+    }
     navigate({ to: "/dashboard" });
   }
 

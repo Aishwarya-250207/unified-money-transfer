@@ -60,7 +60,7 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
             </div>
             <button
               aria-label="Sign out"
-              onClick={() => { authService.signOut(); navigate({ to: "/login", replace: true }); }}
+              onClick={async () => { await authService.signOut(); navigate({ to: "/login", replace: true }); }}
               className="text-sidebar-foreground hover:text-sidebar-accent-foreground"
             >
               <LogOut className="size-4" />

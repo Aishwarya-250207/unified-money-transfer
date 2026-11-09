@@ -14,7 +14,133 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      recipients: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transfer_events: {
+        Row: {
+          at: string
+          id: string
+          message: string
+          transfer_id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          at?: string
+          id?: string
+          message: string
+          transfer_id: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          at?: string
+          id?: string
+          message?: string
+          transfer_id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transfer_events_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "transfers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transfers: {
+        Row: {
+          amount: number
+          cancelled_at: string | null
+          completed_at: string | null
+          confirmed_at: string | null
+          created_at: string
+          currency: string
+          id: string
+          is_demo: boolean
+          note: string
+          recipient_email: string
+          recipient_id: string | null
+          recipient_name: string
+          release_at: string | null
+          risk: Json | null
+          status: string
+          user_id: string
+          verification: Json
+        }
+        Insert: {
+          amount: number
+          cancelled_at?: string | null
+          completed_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          currency: string
+          id?: string
+          is_demo?: boolean
+          note?: string
+          recipient_email: string
+          recipient_id?: string | null
+          recipient_name: string
+          release_at?: string | null
+          risk?: Json | null
+          status?: string
+          user_id: string
+          verification?: Json
+        }
+        Update: {
+          amount?: number
+          cancelled_at?: string | null
+          completed_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          is_demo?: boolean
+          note?: string
+          recipient_email?: string
+          recipient_id?: string | null
+          recipient_name?: string
+          release_at?: string | null
+          risk?: Json | null
+          status?: string
+          user_id?: string
+          verification?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transfers_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
