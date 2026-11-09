@@ -32,6 +32,7 @@ export function TransferDetailSheet({ id, onClose }: { id: string | null; onClos
               <div className="divide-y">
                 <Row label="Recipient">{t.verification.confirmedName ?? t.recipientName}</Row>
                 <Row label="Email">{t.recipientEmail}</Row>
+                <Row label="Payment rail">{t.paymentRail ?? "PayPal Sandbox (Simulated)"}</Row>
                 <Row label="Note">{t.note || "—"}</Row>
                 <Row label="Created">{formatDateTime(t.createdAt)}</Row>
                 {t.risk && <Row label="Risk score">{t.risk.score}/100</Row>}

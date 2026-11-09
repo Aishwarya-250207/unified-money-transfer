@@ -49,7 +49,19 @@ function PendingPage() {
             <div className="mx-auto mt-6 h-1.5 max-w-sm overflow-hidden rounded-full bg-muted">
               <div className="h-full rounded-full bg-warning transition-[width] duration-300" style={{ width: `${pct}%` }} />
             </div>
-            <Button variant="danger" size="xl" className="mt-8 w-full max-w-sm" onClick={() => { transferService.cancel(t.id, "Cancelled by sender during cancellation window.").then(() => toast.success("Transfer cancelled (simulated). Nothing was released."), (e) => toast.error((e as Error).message)); }}>
+            <Button
+              variant="danger"
+              size="xl"
+              className="mt-8 w-full max-w-sm"
+              onClick={() => {
+                transferService
+                  .cancel(t.id, "Cancelled by sender during cancellation window.")
+                  .then(
+                    () => toast.success("Transfer cancelled (simulated). Nothing was released."),
+                    (e) => toast.error((e as Error).message),
+                  );
+              }}
+            >
               <Ban /> Cancel this transfer
             </Button>
           </>
@@ -64,27 +76,23 @@ function PendingPage() {
         <Panel>
           <PanelTitle>Transfer</PanelTitle>
           <div className="tabular text-3xl font-semibold">{formatMoney(t.amount, t.currency)}</div>
-          <div className="mt-3 divide-y">
-            <Row label="Recipient">{t.verification.confirmedName ?? t.recipientName ?? "Unregistered"}</Row>
+          <div className="mt-4 divide-y">
+            <Row label="Recipient">{t.verification.confirmedName ?? t.recipientName}</Row>
             <Row label="Email">{t.recipientEmail}</Row>
-            <Row label="Risk"><RiskBadge level={t.risk?.level} /></Row>
+            <Row label="Payment rail">{t.paymentRail ?? "PayPal Sandbox (Simulated)"}</Row>
+            <Row label="Note">{t.note || "—"}</Row>
+            <Row label="Risk level"><RiskBadge level={t.risk?.level} /></Row>
           </div>
         </Panel>
         <Panel>
-          <PanelTitle>Activity</PanelTitle>
+          <PanelTitle>Activity log</PanelTitle>
           <EventTimeline events={t.events} />
         </Panel>
       </div>
 
-      <div className="mt-6 flex gap-3 rounded-xl border bg-card p-5 text-sm">
-        <Info className="size-5 shrink-0 text-brand" />
-        <p className="text-muted-foreground">
-          <strong className="text-foreground">Why the wait?</strong> Higher-risk transfers get a short cooling-off period. Most scams rely on urgency — this pause gives you time to double-check with the recipient through another channel. In this prototype the hold is simulated; no real funds are held.
-        </p>
-      </div>
-      <div className="mt-6 flex justify-center gap-3">
-        <Button asChild variant="outline"><Link to="/dashboard">Back to dashboard</Link></Button>
-        <Button asChild variant="ghost"><Link to="/history">All transactions</Link></Button>
+      <div className="mt-6 flex justify-between">
+        <Button asChild variant="outline"><Link to="/dashboard">Dashboard</Link></Button>
+        <Button asChild variant="brand"><Link to="/send">Send another transfer</Link></Button>
       </div>
     </div>
   );

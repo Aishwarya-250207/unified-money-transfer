@@ -3,14 +3,16 @@ import {
   Outlet,
   Link,
   createRootRouteWithContext,
+  useNavigate,
   useRouter,
   HeadContent,
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
+import { authService } from "@/services/auth";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -117,6 +119,27 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const navigate = useNavigate();
+  const handledCallback = useRef(false);
+
+  // Email confirmation links land with a code or token. Restore that session once.
+  useEffect(() => {
+    if (handledCallback.current || typeof window === "undefined") return;
+    handledCallback.current = true;
+    const params = new URLSearchParams(window.location.search);
+    const fromEmail = params.has("code") || window.location.hash.includes("access_token") || params.has("error_description");
+    void authService.start().then(() => {
+      if (!fromEmail) return;
+      if (authService.current()) {
+        void navigate({ to: "/dashboard", replace: true });
+        return;
+      }
+      const description = params.get("error_description");
+      if (description && !window.location.pathname.startsWith("/login")) {
+        void navigate({ to: "/login", search: { error: description }, replace: true });
+      }
+    });
+  }, [navigate]);
 
   return (
     <QueryClientProvider client={queryClient}>

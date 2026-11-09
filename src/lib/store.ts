@@ -21,7 +21,11 @@ function load(): AppState {
   if (typeof window === "undefined") return EMPTY;
   try {
     const raw = window.localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw) as AppState;
+    if (raw) {
+      const parsed = JSON.parse(raw) as AppState;
+      // The signed-in user comes from the Cloud session, not this blob.
+      return { user: null, transfers: Array.isArray(parsed.transfers) ? parsed.transfers : seedDemoTransfers() };
+    }
   } catch {
     /* ignore corrupt storage */
   }

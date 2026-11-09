@@ -94,6 +94,7 @@ function Review({ t }: { t: Transfer }) {
         <PanelTitle>Payment summary</PanelTitle>
         <div className="tabular text-4xl font-semibold">{formatMoney(t.amount, t.currency)}</div>
         <div className="mt-4 divide-y">
+          <Row label="Payment rail">{t.paymentRail ?? "PayPal Sandbox (Simulated)"}</Row>
           <Row label="Note">{t.note || "—"}</Row>
           <Row label="Fee">{formatMoney(0, t.currency)}</Row>
           <Row label="Cancellation window">{hold ? `${hold / 60} min` : "None"}</Row>
@@ -113,7 +114,7 @@ function Review({ t }: { t: Transfer }) {
           </Button>
           <Button variant="danger-outline" size="lg" className="w-full" onClick={cancel} disabled={busy}>Cancel transfer</Button>
         </div>
-        <p className="mt-4 text-center text-xs text-muted-foreground">Simulated. No real payment will be made.</p>
+        <p className="mt-4 text-center text-xs text-muted-foreground">PayPal Sandbox Simulated. No real payment will be made.</p>
       </Panel>
     </div>
   );

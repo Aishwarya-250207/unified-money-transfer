@@ -44,9 +44,12 @@ function SendPage() {
     e.preventDefault();
     const r = schema.safeParse(Object.fromEntries(new FormData(e.currentTarget)));
     if (!r.success) return setErrors(Object.fromEntries(r.error.issues.map((i) => [i.path[0], i.message])));
-    let t;
-    try { t = await transferService.createDraft({ ...r.data, currency }); } catch (err) { toast.error((err as Error).message); return; }
-    navigate({ to: "/transfers/$id/verify", params: { id: t.id } });
+    try {
+      const t = await transferService.createDraft({ ...r.data, currency });
+      navigate({ to: "/transfers/$id/verify", params: { id: t.id } });
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
   }
 
   return (

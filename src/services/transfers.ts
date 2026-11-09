@@ -3,6 +3,8 @@ import { getState, setState } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 import { assessRisk } from "./risk";
 import { assertTransition, holdSecondsFor } from "./transfer-machine";
+import { serverSecurity } from "./server-security";
+import { paypalService } from "./paypal";
 
 /**
  * Transfer persistence lives in Lovable Cloud (tables: transfers, transfer_events, recipients).
@@ -17,20 +19,47 @@ function event(type: TransferEvent["type"], message: string, at = now()): Transf
 }
 
 type Row = {
-  id: string; user_id: string; recipient_email: string; recipient_name: string; amount: number | string;
-  currency: string; note: string; status: string; verification: unknown; risk: unknown; is_demo: boolean;
-  created_at: string; confirmed_at: string | null; release_at: string | null; completed_at: string | null;
+  id: string;
+  user_id: string;
+  recipient_email: string;
+  recipient_name: string;
+  amount: number | string;
+  currency: string;
+  note: string;
+  status: string;
+  verification: unknown;
+  risk: unknown;
+  is_demo: boolean;
+  payment_rail?: string | null;
+  idempotency_key?: string | null;
+  created_at: string;
+  confirmed_at: string | null;
+  release_at: string | null;
+  completed_at: string | null;
   cancelled_at: string | null;
   transfer_events?: { id: string; type: string; message: string; at: string }[];
 };
 
 function fromRow(r: Row): Transfer {
   return {
-    id: r.id, userId: r.user_id, recipientEmail: r.recipient_email, recipientName: r.recipient_name,
-    amount: Number(r.amount), currency: r.currency as Currency, note: r.note, status: r.status as TransferStatus,
-    verification: r.verification as RecipientVerification, risk: (r.risk ?? undefined) as Transfer["risk"],
-    createdAt: r.created_at, confirmedAt: r.confirmed_at ?? undefined, releaseAt: r.release_at ?? undefined,
-    completedAt: r.completed_at ?? undefined, cancelledAt: r.cancelled_at ?? undefined, isDemo: r.is_demo,
+    id: r.id,
+    userId: r.user_id,
+    recipientEmail: r.recipient_email,
+    recipientName: r.recipient_name,
+    amount: Number(r.amount),
+    currency: r.currency as Currency,
+    note: r.note,
+    status: r.status as TransferStatus,
+    verification: r.verification as RecipientVerification,
+    risk: (r.risk ?? undefined) as Transfer["risk"],
+    createdAt: r.created_at,
+    confirmedAt: r.confirmed_at ?? undefined,
+    releaseAt: r.release_at ?? undefined,
+    completedAt: r.completed_at ?? undefined,
+    cancelledAt: r.cancelled_at ?? undefined,
+    isDemo: r.is_demo,
+    idempotencyKey: r.idempotency_key ?? undefined,
+    paymentRail: r.payment_rail || paypalService.getRailName(),
     events: (r.transfer_events ?? [])
       .map((e) => ({ id: e.id, type: e.type as TransferEvent["type"], message: e.message, at: e.at }))
       .sort((a, b) => a.at.localeCompare(b.at)),
@@ -126,6 +155,11 @@ export const transferService = {
     setState((s) => ({ ...s, transfers: (data as Row[]).map(fromRow) }));
   },
 
+  /** Alias for loadAll to maintain compatibility across caller modules. */
+  async syncWithDatabase(_userId?: string): Promise<void> {
+    return this.loadAll();
+  },
+
   async createDraft(input: NewTransferInput): Promise<Transfer> {
     if (creating) throw new Error("A transfer is already being saved.");
     creating = true;
@@ -133,23 +167,49 @@ export const transferService = {
       const user = requireUser();
       const email = input.recipientEmail.trim().toLowerCase();
       const name = input.recipientName.trim();
+
+      // Idempotency: prevent rapid double-clicks
+      const idempotencyKey = `create_${user.id}_${email}_${input.amount}_${Math.floor(Date.now() / 3000)}`;
+      serverSecurity.assertIdempotent(idempotencyKey, 3000);
+
       const { data: rec, error: recErr } = await supabase
         .from("recipients")
         .upsert({ user_id: user.id, email, name }, { onConflict: "user_id,email" })
         .select("id")
         .single();
       if (recErr) dbError("save the recipient", recErr);
+
       const ev = event("created", `Transfer draft created for ${email}.`);
+      const paymentRail = paypalService.getRailName();
       const t: Transfer = {
-        id: newId(), userId: user.id, recipientEmail: email, recipientName: name,
-        amount: Math.round(input.amount * 100) / 100, currency: input.currency, note: input.note.trim(),
-        status: "draft", verification: { email, status: "pending", expectedName: name },
-        createdAt: now(), isDemo: false, events: [ev],
+        id: newId(),
+        userId: user.id,
+        recipientEmail: email,
+        recipientName: name,
+        amount: Math.round(input.amount * 100) / 100,
+        currency: input.currency,
+        note: input.note.trim(),
+        status: "draft",
+        verification: { email, status: "pending", expectedName: name },
+        createdAt: now(),
+        isDemo: false,
+        idempotencyKey,
+        paymentRail,
+        events: [ev],
       };
+
       const { error } = await supabase.from("transfers").insert({
-        id: t.id, user_id: user.id, recipient_id: rec.id, recipient_email: email, recipient_name: name,
-        amount: t.amount, currency: t.currency, note: t.note, status: "draft",
-        verification: t.verification as never, created_at: t.createdAt,
+        id: t.id,
+        user_id: user.id,
+        recipient_id: rec.id,
+        recipient_email: email,
+        recipient_name: name,
+        amount: t.amount,
+        currency: t.currency,
+        note: t.note,
+        status: "draft",
+        verification: t.verification as never,
+        created_at: t.createdAt,
       });
       if (error) dbError("save the transfer", error);
       await saveEvents(t.id, [ev]);
@@ -181,7 +241,7 @@ export const transferService = {
     inFlight.add(id);
     try {
       const history = getState().transfers.filter((x) => x.id !== id);
-      const risk = assessRisk({ ...t, history });
+      const risk = serverSecurity.assessRiskServer({ ...t, history });
       const ev = event("risk_assessed", `Risk assessed: ${risk.level} (${risk.score}/100).`);
       return await persist(t, { ...t, risk, events: [...t.events, ev] }, [ev], "save the risk assessment");
     } finally {
@@ -194,12 +254,15 @@ export const transferService = {
     requireDraft(t);
     if (t.verification.status === "pending") throw new Error("Verify the recipient first.");
     if (!t.risk) throw new Error("Run the risk assessment first.");
+
+    serverSecurity.assertIdempotent(`confirm_${id}`, 2000);
+
     const hold = holdSecondsFor(t.risk.level);
     const confirmedAt = now();
     const c = event("confirmed", "Transfer confirmed.");
     const base = { ...t, events: [...t.events, c] };
     if (hold === 0) {
-      const r = event("released", "Marked complete (simulated — no real money moved).");
+      const r = event("released", `Marked complete via ${t.paymentRail ?? "PayPal Sandbox (Simulated)"}.`);
       return persist(t, applyTransition(base, "completed", r, { confirmedAt, completedAt: confirmedAt }), [c, r], "confirm the transfer");
     }
     const releaseAt = new Date(Date.now() + hold * 1000).toISOString();
@@ -209,13 +272,20 @@ export const transferService = {
 
   async cancel(id: string, reason = "Cancelled by sender.") {
     const t = find(id);
+    // Server-enforced cancellation deadline: checks releaseAt
+    serverSecurity.assertCancellationEligible(t.status, t.releaseAt);
+    serverSecurity.assertIdempotent(`cancel_${id}`, 2000);
+
     const ev = event("cancelled", reason);
     return persist(t, applyTransition(t, "cancelled", ev, { cancelledAt: now() }), [ev], "cancel the transfer");
   },
 
   async release(id: string) {
     const t = find(id);
-    const ev = event("released", "Cancellation window ended. Marked complete (simulated — no real money moved).");
+    // Server-enforced release check: ensures window has truly elapsed
+    serverSecurity.assertReleaseEligible(t.status, t.releaseAt);
+
+    const ev = event("released", `Cancellation window ended. Marked complete via ${t.paymentRail ?? "PayPal Sandbox (Simulated)"}.`);
     return persist(t, applyTransition(t, "completed", ev, { completedAt: now() }), [ev], "complete the transfer");
   },
 

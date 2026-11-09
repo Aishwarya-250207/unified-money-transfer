@@ -78,5 +78,7 @@ export interface Transfer {
   completedAt?: string;
   cancelledAt?: string;
   isDemo: boolean;
+  idempotencyKey?: string;
+  paymentRail?: string;
   events: TransferEvent[];
 }
