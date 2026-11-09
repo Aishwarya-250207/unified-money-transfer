@@ -49,7 +49,7 @@ function PendingPage() {
             <div className="mx-auto mt-6 h-1.5 max-w-sm overflow-hidden rounded-full bg-muted">
               <div className="h-full rounded-full bg-warning transition-[width] duration-300" style={{ width: `${pct}%` }} />
             </div>
-            <Button variant="danger" size="xl" className="mt-8 w-full max-w-sm" onClick={() => { transferService.cancel(t.id, "Cancelled by sender during cancellation window."); toast.success("Transfer cancelled (simulated). Nothing was released."); }}>
+            <Button variant="danger" size="xl" className="mt-8 w-full max-w-sm" onClick={() => { transferService.cancel(t.id, "Cancelled by sender during cancellation window.").then(() => toast.success("Transfer cancelled (simulated). Nothing was released."), (e) => toast.error((e as Error).message)); }}>
               <Ban /> Cancel this transfer
             </Button>
           </>

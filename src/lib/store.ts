@@ -25,7 +25,7 @@ function load(): AppState {
   } catch {
     /* ignore corrupt storage */
   }
-  return { user: null, transfers: seedDemoTransfers() };
+  return EMPTY;
 }
 
 export function getState(): AppState {
@@ -35,7 +35,7 @@ export function getState(): AppState {
 
 export function setState(updater: (s: AppState) => AppState) {
   state = updater(getState());
-  if (typeof window !== "undefined") window.localStorage.setItem(KEY, JSON.stringify(state));
+  if (typeof window !== "undefined") window.localStorage.setItem(KEY, JSON.stringify({ user: state.user, transfers: [] }));
   listeners.forEach((l) => l());
 }
 

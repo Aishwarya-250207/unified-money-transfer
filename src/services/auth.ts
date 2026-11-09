@@ -1,6 +1,7 @@
 import type { User } from "@/types";
 import { getState, setState } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
+import { transferService } from "./transfers";
 import type { User as SbUser } from "@supabase/supabase-js";
 
 function toUser(u: SbUser): User {
@@ -21,6 +22,7 @@ export const authService = {
     const { data } = await supabase.auth.getUser();
     const user = data.user ? toUser(data.user) : null;
     setUser(user);
+    if (user) await transferService.loadAll();
     return user;
   },
 
@@ -42,6 +44,7 @@ export const authService = {
     if (error) throw error;
     const user = toUser(data.user);
     setUser(user);
+    await transferService.loadAll();
     return user;
   },
 

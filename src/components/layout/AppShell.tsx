@@ -4,7 +4,7 @@ import { History, LayoutDashboard, LogOut, Menu, RotateCcw, Send, Shield } from 
 import { Logo } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { useUser, resetState } from "@/lib/store";
+import { useUser } from "@/lib/store";
 import { authService } from "@/services/auth";
 import { transferService } from "@/services/transfers";
 
@@ -45,8 +45,8 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
         <div className="rounded-lg border border-sidebar-border p-3 text-xs text-sidebar-foreground">
           <p className="font-semibold text-sidebar-accent-foreground">Prototype mode</p>
           <p className="mt-1 leading-relaxed">No real money moves. Transfers and holds are simulated.</p>
-          <button onClick={() => resetState()} className="mt-2 inline-flex items-center gap-1 font-medium text-sidebar-primary hover:underline">
-            <RotateCcw className="size-3" /> Reset demo data
+          <button onClick={() => { transferService.loadAll().catch(() => {}); }} className="mt-2 inline-flex items-center gap-1 font-medium text-sidebar-primary hover:underline">
+            <RotateCcw className="size-3" /> Reload from cloud
           </button>
         </div>
         {user && (
@@ -77,8 +77,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   // Central ticker: releases pending transfers whose cancellation window elapsed.
   useEffect(() => {
-    transferService.releaseDue();
-    const id = setInterval(() => transferService.releaseDue(), 1000);
+    transferService.releaseDue().catch(() => {});
+    const id = setInterval(() => transferService.releaseDue().catch(() => {}), 1000);
     return () => clearInterval(id);
   }, []);
 

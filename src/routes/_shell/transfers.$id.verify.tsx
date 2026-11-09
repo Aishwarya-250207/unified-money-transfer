@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, ArrowRight, BadgeCheck, Loader2, RefreshCw, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -44,7 +45,7 @@ function Verify({ t }: { t: Transfer }) {
   async function run(expected: string) {
     setChecking(true);
     const result = await verifyRecipient(t.recipientEmail, expected);
-    transferService.attachVerification(t.id, result);
+    try { await transferService.attachVerification(t.id, result); } catch (e) { toast.error((e as Error).message); }
     setChecking(false);
   }
 
