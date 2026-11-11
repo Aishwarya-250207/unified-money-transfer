@@ -114,7 +114,7 @@ async function captureRealOrder(orderId: string): Promise<PayPalOrderResult> {
   const token = await getAccessToken();
   const resp = await fetch(`https://api-m.sandbox.paypal.com/v2/checkout/orders/${orderId}/capture`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "PayPal-Request-Id": `capture-${orderId}` },
   });
   if (!resp.ok) {
     const txt = await resp.text();
