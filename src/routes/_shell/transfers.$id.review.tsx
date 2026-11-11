@@ -51,7 +51,7 @@ function Review({ t }: { t: Transfer }) {
   async function confirm() {
     setBusy(true);
     try {
-      const resp = await fetch("/_shell/paypal/create", {
+      const resp = await fetch("/paypal/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
