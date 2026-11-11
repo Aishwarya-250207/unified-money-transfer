@@ -13,6 +13,7 @@ import { useTransfer } from "@/lib/store";
 import { formatMoney } from "@/lib/format";
 
 import { transferService } from "@/services/transfers";
+import { holdSecondsFor } from "@/services/transfer-machine";
 import type { Transfer } from "@/types";
 
 
