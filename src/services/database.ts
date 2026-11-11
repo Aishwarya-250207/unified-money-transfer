@@ -1,4 +1,6 @@
-import { getSupabase, isCloudConfigured } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
+const getSupabase = () => supabase;
+const isCloudConfigured = () => Boolean(import.meta.env.VITE_SUPABASE_URL);
 import type { RecipientVerification, Transfer, TransferEvent } from "@/types";
 
 export interface DatabaseTransferRow {

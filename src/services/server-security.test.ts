@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { serverSecurity, SecurityError } from "./server-security";
-import type { RiskInput } from "@/types";
+import type { RiskInput } from "./risk";
 
 describe("serverSecurity backend rules", () => {
   it("enforces valid transitions and rejects invalid ones", () => {
