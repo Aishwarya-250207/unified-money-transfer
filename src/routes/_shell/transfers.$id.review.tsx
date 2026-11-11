@@ -13,6 +13,7 @@ import { formatMoney } from "@/lib/format";
 import { paypalService } from "@/services/paypal";
 import { transferService } from "@/services/transfers";
 import type { Transfer } from "@/types";
+import { holdSecondsFor } from "@/services/transfer-machine";
 
 export const Route = createFileRoute("/_shell/transfers/$id/review")({
   head: () => ({

@@ -1,4 +1,5 @@
-import type { RiskInput, RiskAssessment, TransferStatus } from "@/types";
+import type { RiskAssessment, TransferStatus } from "@/types";
+import type { RiskInput } from "./risk";
 import { assertTransition } from "./transfer-machine";
 import { assessRisk } from "./risk";
 
