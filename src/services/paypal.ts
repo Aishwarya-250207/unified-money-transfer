@@ -34,7 +34,7 @@ export interface PayPalOrderResult {
 let cachedToken: { access_token: string; expires_at: number } | null = null;
 function getEnvVar(name: string): string | undefined {
   // Secrets are provided via the global __CLOUDFLARE_ENV set in server.ts
-  return (globalThis as any).__CLOUDFLARE_ENV?.[name] as string | undefined;
+  return ((globalThis as any).__CLOUDFLARE_ENV?.[name] ?? (typeof process !== "undefined" ? process.env[name] : undefined)) as string | undefined;
 }
 async function getAccessToken(): Promise<string> {
   if (cachedToken && Date.now() < cachedToken.expires_at - 60_000) {
@@ -45,7 +45,7 @@ async function getAccessToken(): Promise<string> {
   if (!clientId || !secret) {
     throw new Error("PayPal credentials missing – set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET.");
   }
-  const auth = Buffer.from(`${clientId}:${secret}`).toString("base64");
+  const auth = btoa(`${clientId}:${secret}`);
   const resp = await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token", {
     method: "POST",
     headers: {
@@ -139,17 +139,10 @@ export const paypalService = {
     return PAYPAL_RAIL_LABEL;
   },
   async createSandboxOrder(params: { transferId: string; amount: number; currency: string; recipientEmail: string; }): Promise<PayPalOrderResult> {
-    if (this.isConfigured()) {
-      const { orderId, approveUrl } = await createRealOrder(params);
-      return { orderId, approveUrl, status: "CREATED", rail: this.getRailName(), isLive: false, timestamp: new Date().toISOString() };
-    }
-    const timestamp = new Date().toISOString();
-    return { orderId: `SIM-PP-${params.transferId}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`, status: "CREATED", rail: "PayPal Sandbox (Simulated)", isLive: false, timestamp };
+    const { orderId, approveUrl } = await createRealOrder(params);
+    return { orderId, approveUrl, status: "CREATED", rail: this.getRailName(), isLive: false, timestamp: new Date().toISOString() };
   },
   async captureSandboxOrder(orderId: string): Promise<PayPalOrderResult> {
-    if (this.isConfigured()) {
-      return captureRealOrder(orderId);
-    }
-    return { orderId, status: "COMPLETED", rail: "PayPal Sandbox (Simulated)", isLive: false, timestamp: new Date().toISOString() };
+    return captureRealOrder(orderId);
   },
 };
