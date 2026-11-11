@@ -11,10 +11,10 @@ import { StepGuard } from "@/components/transfer/StepGuard";
 import { RiskBadge, VerificationBadge } from "@/components/transfer/badges";
 import { useTransfer } from "@/lib/store";
 import { formatMoney } from "@/lib/format";
-import { holdSecondsFor } from "@/services/transfer-machine";
+
 import { transferService } from "@/services/transfers";
 import type { Transfer } from "@/types";
-import { holdSecondsFor } from "@/services/transfer-machine";
+
 
 export const Route = createFileRoute("/_shell/transfers/$id/review")({
   head: () => ({
