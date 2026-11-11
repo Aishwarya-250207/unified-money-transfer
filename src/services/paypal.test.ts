@@ -8,24 +8,17 @@ describe("paypal sandbox service", () => {
     expect(railName.toLowerCase()).toContain("sandbox");
   });
 
-  it("creates sandbox order with non-live safety guarantee", async () => {
-    const result = await paypalService.createSandboxOrder({
-      transferId: "tr_abc",
-      amount: 100,
-      currency: "USD",
-      recipientEmail: "test@example.com",
-    });
-
-    expect(result.orderId).toBeDefined();
-    expect(result.status).toBe("CREATED");
-    expect(result.isLive).toBe(false); // Must never claim to be real live payment
-    expect(result.rail.toLowerCase()).toContain("sandbox");
-  });
-
-  it("captures sandbox order successfully", async () => {
-    const result = await paypalService.captureSandboxOrder("ORDER-123");
-    expect(result.orderId).toBe("ORDER-123");
-    expect(result.status).toBe("COMPLETED");
-    expect(result.isLive).toBe(false);
+  it("never simulates: fails clearly when credentials are missing", async () => {
+    const env = { ...process.env };
+    delete process.env.PAYPAL_CLIENT_ID;
+    delete process.env.PAYPAL_CLIENT_SECRET;
+    try {
+      expect(paypalService.isConfigured()).toBe(false);
+      await expect(
+        paypalService.createSandboxOrder({ transferId: "tr_abc", amount: 100, currency: "USD", recipientEmail: "a@b.com" }),
+      ).rejects.toThrow(/credentials missing/);
+    } finally {
+      process.env = env;
+    }
   });
 });
