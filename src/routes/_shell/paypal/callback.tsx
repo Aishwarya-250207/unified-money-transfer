@@ -11,8 +11,9 @@ import { transferService } from "@/services/transfers";
 export const Route = createFileRoute("/_shell/paypal/callback")({
   // No UI – this route only performs server‑side side‑effects and redirects.
   component: () => null,
-  beforeLoad: async ({ location }) => {
-    const qs = new URLSearchParams(location.search);
+  // Server‑side loader for the GET callback from PayPal.
+  loader: async ({ request }) => {
+    const qs = new URL(request.url).searchParams;
     const transferId = qs.get("transferId");
     const orderId = qs.get("token"); // PayPal supplies `token` as the order ID
     if (!transferId || !orderId) {
