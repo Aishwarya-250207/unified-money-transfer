@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
-const getSupabase = () => supabase;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getSupabase = () => supabase as any;
 const isCloudConfigured = () => Boolean(import.meta.env.VITE_SUPABASE_URL);
 import type { RecipientVerification, Transfer, TransferEvent } from "@/types";
 
