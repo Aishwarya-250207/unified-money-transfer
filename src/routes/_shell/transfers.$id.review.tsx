@@ -10,7 +10,7 @@ import { StepGuard } from "@/components/transfer/StepGuard";
 import { RiskBadge, VerificationBadge } from "@/components/transfer/badges";
 import { useTransfer } from "@/lib/store";
 import { formatMoney } from "@/lib/format";
-import { holdSecondsFor } from "@/services/transfer-machine";
+import { paypalService } from "@/services/paypal";
 import { transferService } from "@/services/transfers";
 import type { Transfer } from "@/types";
 
@@ -46,6 +46,42 @@ function Review({ t }: { t: Transfer }) {
   const ready = v.status !== "pending" && !!t.risk;
 
   async function confirm() {
+    setBusy(true);
+    // If PayPal is configured, start PayPal checkout flow
+    if (paypalService.isConfigured()) {
+      try {
+        const order = await paypalService.createSandboxOrder({
+          transferId: t.id,
+          amount: t.amount,
+          currency: t.currency,
+          recipientEmail: t.recipientEmail,
+        });
+        // Redirect user to PayPal approval URL
+        if (order.approveUrl) {
+          // Perform client‑side navigation to PayPal
+          window.location.href = order.approveUrl;
+          return; // exit, PayPal will handle later
+        }
+        throw new Error('PayPal approval URL missing');
+      } catch (e) {
+        toast.error((e as Error).message);
+        setBusy(false);
+        return;
+      }
+    }
+    // Existing flow for simulated or non‑PayPal rails
+    try {
+      const next = await transferService.confirm(t.id);
+      if (next.status === "pending")
+        navigate({ to: "/transfers/$id/pending", params: { id: t.id } });
+      else {
+        toast.success("Transfer completed (simulated).");
+        navigate({ to: "/history" });
+      }
+    } catch (e) {
+      toast.error((e as Error).message);
+      setBusy(false);
+    }
     setBusy(true);
     await new Promise((r) => setTimeout(r, 700));
     try {

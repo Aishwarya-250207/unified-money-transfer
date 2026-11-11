@@ -1,11 +1,6 @@
-/**
- * PayPal Sandbox Integration & Simulation Service
- *
- * Implements PayPal Sandbox connectivity when credentials are provided,
- * and maintains transparent, clearly labeled sandbox simulation otherwise.
- * "Never pretend simulated payments are real."
- */
+// PayPal Sandbox Integration (real server‑side only)
 
+/** Configuration visible to client (only label). */
 export interface PayPalConfig {
   clientId?: string;
   isSandbox: boolean;
@@ -15,7 +10,10 @@ export interface PayPalConfig {
 export const PAYPAL_CONFIG: PayPalConfig = {
   clientId: typeof import.meta !== "undefined" ? import.meta.env.VITE_PAYPAL_CLIENT_ID : undefined,
   isSandbox: true,
-  environment: typeof import.meta !== "undefined" && import.meta.env.VITE_PAYPAL_CLIENT_ID ? "sandbox" : "simulated",
+  environment:
+    typeof import.meta !== "undefined" && import.meta.env.VITE_PAYPAL_CLIENT_ID
+      ? "sandbox"
+      : "simulated",
 };
 
 export const PAYPAL_RAIL_LABEL = PAYPAL_CONFIG.clientId
@@ -26,63 +24,132 @@ export interface PayPalOrderResult {
   orderId: string;
   status: "CREATED" | "COMPLETED" | "VOIDED";
   rail: string;
-  isLive: false; // Always false — safe sandbox mode
+  isLive: false; // always sandbox
   timestamp: string;
+  /** Only for real orders – approval URL for the buyer */
+  approveUrl?: string;
+}
+
+// ------- Server‑side helpers (never exposed to client) -------
+let cachedToken: { access_token: string; expires_at: number } | null = null;
+function getEnvVar(name: string): string | undefined {
+  // Secrets are provided via the global __CLOUDFLARE_ENV set in server.ts
+  return (globalThis as any).__CLOUDFLARE_ENV?.[name] as string | undefined;
+}
+async function getAccessToken(): Promise<string> {
+  if (cachedToken && Date.now() < cachedToken.expires_at - 60_000) {
+    return cachedToken.access_token;
+  }
+  const clientId = getEnvVar("PAYPAL_CLIENT_ID");
+  const secret = getEnvVar("PAYPAL_CLIENT_SECRET");
+  if (!clientId || !secret) {
+    throw new Error("PayPal credentials missing – set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET.");
+  }
+  const auth = Buffer.from(`${clientId}:${secret}`).toString("base64");
+  const resp = await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: "grant_type=client_credentials",
+  });
+  if (!resp.ok) {
+    const txt = await resp.text();
+    throw new Error(`PayPal token request failed ${resp.status}: ${txt}`);
+  }
+  const data = await resp.json();
+  cachedToken = { access_token: data.access_token, expires_at: Date.now() + data.expires_in * 1000 };
+  return data.access_token;
+}
+
+async function createRealOrder(params: {
+  transferId: string;
+  amount: number; // cents
+  currency: string;
+  recipientEmail: string;
+}): Promise<{ orderId: string; approveUrl: string }> {
+  const token = await getAccessToken();
+  const appBaseUrl = getEnvVar("APP_BASE_URL") ?? "";
+  const payload = {
+    intent: "CAPTURE",
+    purchase_units: [
+      {
+        reference_id: params.transferId,
+        amount: {
+          currency_code: params.currency,
+          value: (params.amount / 100).toFixed(2),
+        },
+        payee: { email_address: params.recipientEmail },
+      },
+    ],
+    application_context: {
+      brand_name: "SafeSend",
+      landing_page: "NO_PREFERENCE",
+      user_action: "PAY_NOW",
+      return_url: `${appBaseUrl}/paypal/callback?transferId=${params.transferId}`,
+      cancel_url: `${appBaseUrl}/dashboard`,
+    },
+  };
+
+  const resp = await fetch("https://api-m.sandbox.paypal.com/v2/checkout/orders", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!resp.ok) {
+    const txt = await resp.text();
+    throw new Error(`PayPal order creation failed ${resp.status}: ${txt}`);
+  }
+  const data = await resp.json();
+  const approve = data.links.find((l: any) => l.rel === "approve");
+  if (!approve) throw new Error("PayPal approval URL missing in response");
+  return { orderId: data.id, approveUrl: approve.href };
+}
+
+async function captureRealOrder(orderId: string): Promise<PayPalOrderResult> {
+  const token = await getAccessToken();
+  const resp = await fetch(`https://api-m.sandbox.paypal.com/v2/checkout/orders/${orderId}/capture`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+  });
+  if (!resp.ok) {
+    const txt = await resp.text();
+    throw new Error(`PayPal capture failed ${resp.status}: ${txt}`);
+  }
+  const data = await resp.json();
+  const status = data.status as "COMPLETED" | "VOIDED" | string;
+  return {
+    orderId,
+    status: status as any,
+    rail: "PayPal Sandbox API",
+    isLive: false,
+    timestamp: new Date().toISOString(),
+  };
 }
 
 export const paypalService = {
   isConfigured(): boolean {
-    return Boolean(PAYPAL_CONFIG.clientId);
+    return Boolean(getEnvVar("PAYPAL_CLIENT_ID") && getEnvVar("PAYPAL_CLIENT_SECRET"));
   },
-
   getRailName(): string {
     return PAYPAL_RAIL_LABEL;
   },
-
-  /**
-   * Creates a sandbox order for the transfer.
-   * If real PayPal Sandbox keys are present, this hits the sandbox endpoint.
-   * Otherwise returns a transparently labeled simulated sandbox order.
-   */
-  async createSandboxOrder(params: {
-    transferId: string;
-    amount: number;
-    currency: string;
-    recipientEmail: string;
-  }): Promise<PayPalOrderResult> {
-    const timestamp = new Date().toISOString();
-
-    if (PAYPAL_CONFIG.clientId) {
-      // Real sandbox client configured
-      return {
-        orderId: `PAYPAL-SANDBOX-${params.transferId}`,
-        status: "CREATED",
-        rail: "PayPal Sandbox API",
-        isLive: false,
-        timestamp,
-      };
+  async createSandboxOrder(params: { transferId: string; amount: number; currency: string; recipientEmail: string; }): Promise<PayPalOrderResult> {
+    if (this.isConfigured()) {
+      const { orderId, approveUrl } = await createRealOrder(params);
+      return { orderId, approveUrl, status: "CREATED", rail: this.getRailName(), isLive: false, timestamp: new Date().toISOString() };
     }
-
-    // Transparently simulated PayPal Sandbox rail
-    return {
-      orderId: `SIM-PP-${params.transferId}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-      status: "CREATED",
-      rail: "PayPal Sandbox (Simulated)",
-      isLive: false,
-      timestamp,
-    };
+    const timestamp = new Date().toISOString();
+    return { orderId: `SIM-PP-${params.transferId}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`, status: "CREATED", rail: "PayPal Sandbox (Simulated)", isLive: false, timestamp };
   },
-
-  /**
-   * Captures the sandbox order upon release.
-   */
   async captureSandboxOrder(orderId: string): Promise<PayPalOrderResult> {
-    return {
-      orderId,
-      status: "COMPLETED",
-      rail: PAYPAL_CONFIG.clientId ? "PayPal Sandbox API" : "PayPal Sandbox (Simulated)",
-      isLive: false,
-      timestamp: new Date().toISOString(),
-    };
+    if (this.isConfigured()) {
+      return captureRealOrder(orderId);
+    }
+    return { orderId, status: "COMPLETED", rail: "PayPal Sandbox (Simulated)", isLive: false, timestamp: new Date().toISOString() };
   },
 };

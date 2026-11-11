@@ -17,6 +17,7 @@ import { Route as ShellDashboardRouteImport } from './routes/_shell/dashboard'
 import { Route as ShellHistoryRouteImport } from './routes/_shell/history'
 import { Route as ShellSecurityRouteImport } from './routes/_shell/security'
 import { Route as ShellSendRouteImport } from './routes/_shell/send'
+import { Route as ShellPaypalCallbackRouteImport } from './routes/_shell/paypal/callback'
 import { Route as ShellTransfersIdPendingRouteImport } from './routes/_shell/transfers.$id.pending'
 import { Route as ShellTransfersIdReviewRouteImport } from './routes/_shell/transfers.$id.review'
 import { Route as ShellTransfersIdRiskRouteImport } from './routes/_shell/transfers.$id.risk'
@@ -61,6 +62,11 @@ const ShellSendRoute = ShellSendRouteImport.update({
   path: '/send',
   getParentRoute: () => ShellRouteRoute,
 } as any)
+const ShellPaypalCallbackRoute = ShellPaypalCallbackRouteImport.update({
+  id: '/paypal/callback',
+  path: '/paypal/callback',
+  getParentRoute: () => ShellRouteRoute,
+} as any)
 const ShellTransfersIdPendingRoute = ShellTransfersIdPendingRouteImport.update({
   id: '/transfers/$id/pending',
   path: '/transfers/$id/pending',
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/history': typeof ShellHistoryRoute
   '/security': typeof ShellSecurityRoute
   '/send': typeof ShellSendRoute
+  '/paypal/callback': typeof ShellPaypalCallbackRoute
   '/transfers/$id/pending': typeof ShellTransfersIdPendingRoute
   '/transfers/$id/review': typeof ShellTransfersIdReviewRoute
   '/transfers/$id/risk': typeof ShellTransfersIdRiskRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/history': typeof ShellHistoryRoute
   '/security': typeof ShellSecurityRoute
   '/send': typeof ShellSendRoute
+  '/paypal/callback': typeof ShellPaypalCallbackRoute
   '/transfers/$id/pending': typeof ShellTransfersIdPendingRoute
   '/transfers/$id/review': typeof ShellTransfersIdReviewRoute
   '/transfers/$id/risk': typeof ShellTransfersIdRiskRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/_shell/history': typeof ShellHistoryRoute
   '/_shell/security': typeof ShellSecurityRoute
   '/_shell/send': typeof ShellSendRoute
+  '/_shell/paypal/callback': typeof ShellPaypalCallbackRoute
   '/_shell/transfers/$id/pending': typeof ShellTransfersIdPendingRoute
   '/_shell/transfers/$id/review': typeof ShellTransfersIdReviewRoute
   '/_shell/transfers/$id/risk': typeof ShellTransfersIdRiskRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/security'
     | '/send'
+    | '/paypal/callback'
     | '/transfers/$id/pending'
     | '/transfers/$id/review'
     | '/transfers/$id/risk'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/security'
     | '/send'
+    | '/paypal/callback'
     | '/transfers/$id/pending'
     | '/transfers/$id/review'
     | '/transfers/$id/risk'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/_shell/history'
     | '/_shell/security'
     | '/_shell/send'
+    | '/_shell/paypal/callback'
     | '/_shell/transfers/$id/pending'
     | '/_shell/transfers/$id/review'
     | '/_shell/transfers/$id/risk'
@@ -231,6 +243,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShellSendRouteImport
       parentRoute: typeof ShellRouteRoute
     }
+    '/_shell/paypal/callback': {
+      id: '/_shell/paypal/callback'
+      path: '/paypal/callback'
+      fullPath: '/paypal/callback'
+      preLoaderRoute: typeof ShellPaypalCallbackRouteImport
+      parentRoute: typeof ShellRouteRoute
+    }
     '/_shell/transfers/$id/pending': {
       id: '/_shell/transfers/$id/pending'
       path: '/transfers/$id/pending'
@@ -267,6 +286,7 @@ interface ShellRouteRouteChildren {
   ShellHistoryRoute: typeof ShellHistoryRoute
   ShellSecurityRoute: typeof ShellSecurityRoute
   ShellSendRoute: typeof ShellSendRoute
+  ShellPaypalCallbackRoute: typeof ShellPaypalCallbackRoute
   ShellTransfersIdPendingRoute: typeof ShellTransfersIdPendingRoute
   ShellTransfersIdReviewRoute: typeof ShellTransfersIdReviewRoute
   ShellTransfersIdRiskRoute: typeof ShellTransfersIdRiskRoute
@@ -278,6 +298,7 @@ const ShellRouteRouteChildren: ShellRouteRouteChildren = {
   ShellHistoryRoute: ShellHistoryRoute,
   ShellSecurityRoute: ShellSecurityRoute,
   ShellSendRoute: ShellSendRoute,
+  ShellPaypalCallbackRoute: ShellPaypalCallbackRoute,
   ShellTransfersIdPendingRoute: ShellTransfersIdPendingRoute,
   ShellTransfersIdReviewRoute: ShellTransfersIdReviewRoute,
   ShellTransfersIdRiskRoute: ShellTransfersIdRiskRoute,
