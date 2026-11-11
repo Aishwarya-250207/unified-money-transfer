@@ -28,3 +28,5 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+- PayPal return capture runs in an authenticated server function after browser session restoration; route loaders are isomorphic and cannot use a raw Request or browser transfer store for server completion.
