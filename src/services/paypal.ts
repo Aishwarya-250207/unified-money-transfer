@@ -116,11 +116,22 @@ async function captureRealOrder(orderId: string): Promise<PayPalOrderResult> {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "PayPal-Request-Id": `capture-${orderId}` },
   });
+  let data: any;
   if (!resp.ok) {
     const txt = await resp.text();
-    throw new Error(`PayPal capture failed ${resp.status}: ${txt}`);
+    if (resp.status === 422 && txt.includes("ORDER_ALREADY_CAPTURED")) {
+      // Retry/refresh of the return page: read the existing order instead of failing.
+      const get = await fetch(`https://api-m.sandbox.paypal.com/v2/checkout/orders/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!get.ok) throw new Error(`PayPal order lookup failed ${get.status}: ${await get.text()}`);
+      data = await get.json();
+    } else {
+      throw new Error(`PayPal capture failed ${resp.status}: ${txt}`);
+    }
+  } else {
+    data = await resp.json();
   }
-  const data = await resp.json();
   const status = data.status as "COMPLETED" | "VOIDED" | string;
   return {
     orderId,

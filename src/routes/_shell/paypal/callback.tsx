@@ -1,6 +1,6 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { createServerFn, useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { paypalService } from "@/services/paypal";
@@ -17,7 +17,19 @@ export const captureCallback = createServerFn({ method: "POST" })
     transferId: z.string().min(1).max(100),
     orderId: z.string().regex(/^[A-Za-z0-9]+$/).max(100),
   }).parse(input))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<{ ok: true; status: string } | { ok: false; error: string }> => {
+    try {
+      return await completeCapture(data, context);
+    } catch (e) {
+      console.error("PayPal callback failed", e);
+      return { ok: false, error: e instanceof Error ? e.message : String(e) };
+    }
+  });
+
+async function completeCapture(
+  data: { transferId: string; orderId: string },
+  context: { supabase: any; userId: string },
+): Promise<{ ok: true; status: string }> {
     const { data: transfer, error } = await context.supabase.from("transfers")
       .select("status").eq("id", data.transferId).eq("user_id", context.userId).single();
     if (error || !transfer) throw new Error(error?.message ?? "Transfer not found");
@@ -39,8 +51,8 @@ export const captureCallback = createServerFn({ method: "POST" })
       });
       if (eventError) throw new Error(eventError.message);
     }
-    return { status: captured.status };
-  });
+    return { ok: true, status: captured.status };
+}
 
 export const Route = createFileRoute("/_shell/paypal/callback")({
   head: () => ({ meta: [
@@ -57,13 +69,33 @@ export const Route = createFileRoute("/_shell/paypal/callback")({
 function Callback() {
   const capture = useServerFn(captureCallback);
   const navigate = useNavigate();
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const started = useRef(false);
   useEffect(() => {
+    if (started.current) return;
+    started.current = true;
     const params = new URLSearchParams(window.location.search);
-    void capture({ data: { transferId: params.get("transferId") ?? "", orderId: params.get("token") ?? "" } })
-      .then(() => navigate({ to: "/history", replace: true }))
-      .catch((reason) => setError(reason instanceof Error ? reason : new Error(String(reason))));
+    const transferId = params.get("transferId") ?? "";
+    const orderId = params.get("token") ?? "";
+    if (!transferId || !orderId) {
+      setError("The PayPal return link is missing the transfer or order reference.");
+      return;
+    }
+    capture({ data: { transferId, orderId } })
+      .then((res) => {
+        if (res.ok) navigate({ to: "/history", replace: true });
+        else setError(res.error);
+      })
+      .catch((reason) => setError(reason instanceof Error ? reason.message : String(reason)));
   }, [capture, navigate]);
-  if (error) throw error;
+  if (error) {
+    return (
+      <div className="mx-auto max-w-xl rounded-lg border p-6">
+        <p className="font-medium text-danger">PayPal payment could not be completed</p>
+        <p className="mt-2 break-words text-sm text-muted-foreground">{error}</p>
+        <Link to="/history" className="mt-4 inline-block text-sm text-brand hover:underline">Go to Transactions</Link>
+      </div>
+    );
+  }
   return <p className="text-muted-foreground">Completing PayPal Sandbox payment…</p>;
 }
