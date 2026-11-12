@@ -25,10 +25,10 @@ describe("PayPal callback completion", () => {
     mocks.capture.mockResolvedValue({ status: "APPROVED" });
     const run = captureCallback as unknown as (args: unknown) => Promise<unknown>;
     const args = { data: { transferId: "transfer", orderId: "ORDER" }, context: { supabase: mocks.db, userId: "owner" } };
-    await expect(run(args)).rejects.toThrow("status: APPROVED");
+    await expect(run(args)).resolves.toMatchObject({ ok: false, error: expect.stringContaining("status: APPROVED") });
     expect(update).not.toHaveBeenCalled();
     mocks.capture.mockResolvedValue({ status: "COMPLETED" });
-    await expect(run(args)).resolves.toEqual({ status: "COMPLETED" });
+    await expect(run(args)).resolves.toEqual({ ok: true, status: "COMPLETED" });
     expect(update).toHaveBeenCalledWith(expect.objectContaining({ status: "completed" }));
     expect(insert).toHaveBeenCalledWith(expect.objectContaining({ type: "released", transfer_id: "transfer" }));
   });
