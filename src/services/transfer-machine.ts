@@ -43,7 +43,7 @@ export function holdSecondsFor(level: RiskLevel | undefined): number {
 }
 
 /** Checkout is allowed only after the saved cancellation deadline. */
-export function assertCheckoutEligible(status: TransferStatus, releaseAt: string | undefined, at = Date.now()) {
+export function assertCheckoutEligible(status: string, releaseAt: string | undefined, at = Date.now()) {
   const deadline = releaseAt ? Date.parse(releaseAt) : NaN;
   if (status !== "pending" || !Number.isFinite(deadline) || at < deadline) {
     throw new Error("PayPal checkout requires a pending transfer whose cancellation window has ended.");
