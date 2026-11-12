@@ -33,13 +33,21 @@ export function assertTransition(from: TransferStatus, to: TransferStatus) {
 
 /** Cancellation window (seconds) applied on confirm, by risk level. */
 export const HOLD_SECONDS: Record<RiskLevel, number> = {
-  LOW: 0,
+  LOW: 60,
   MEDIUM: 60,
-  HIGH: 180,
+  HIGH: 60,
 };
 
 export function holdSecondsFor(level: RiskLevel | undefined): number {
   return HOLD_SECONDS[level ?? "HIGH"];
+}
+
+/** Checkout is allowed only after the saved cancellation deadline. */
+export function assertCheckoutEligible(status: TransferStatus, releaseAt: string | undefined, at = Date.now()) {
+  const deadline = releaseAt ? Date.parse(releaseAt) : NaN;
+  if (status !== "pending" || !Number.isFinite(deadline) || at < deadline) {
+    throw new Error("PayPal checkout requires a pending transfer whose cancellation window has ended.");
+  }
 }
 
 export function isTerminal(status: TransferStatus) {

@@ -261,10 +261,6 @@ export const transferService = {
     const confirmedAt = now();
     const c = event("confirmed", "Transfer confirmed.");
     const base = { ...t, events: [...t.events, c] };
-    if (hold === 0) {
-      const r = event("released", `Marked complete via ${t.paymentRail ?? "PayPal Sandbox (Simulated)"}.`);
-      return persist(t, applyTransition(base, "completed", r, { confirmedAt, completedAt: confirmedAt }), [c, r], "confirm the transfer");
-    }
     const releaseAt = new Date(Date.now() + hold * 1000).toISOString();
     const h = event("hold_started", `Cancellation window started (${hold}s).`);
     return persist(t, applyTransition(base, "pending", h, { confirmedAt, releaseAt }), [c, h], "confirm the transfer");
@@ -285,8 +281,7 @@ export const transferService = {
     // Server-enforced release check: ensures window has truly elapsed
     serverSecurity.assertReleaseEligible(t.status, t.releaseAt);
 
-    const ev = event("released", `Cancellation window ended. Marked complete via ${t.paymentRail ?? "PayPal Sandbox (Simulated)"}.`);
-    return persist(t, applyTransition(t, "completed", ev, { completedAt: now() }), [ev], "complete the transfer");
+    throw new Error("Payment can only complete after PayPal confirms server-side capture.");
   },
 
   /** Complete every pending transfer whose window has elapsed. Called by the app shell ticker. */

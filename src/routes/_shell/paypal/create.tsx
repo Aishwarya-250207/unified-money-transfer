@@ -1,30 +1,27 @@
-// Server‑side endpoint to create a PayPal Sandbox order using TanStack Start API
 import { createFileRoute } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { paypalService } from "@/services/paypal";
+import { assertCheckoutEligible } from "@/services/transfer-machine";
 
-export const Route = createFileRoute("/_shell/paypal/create")({
-  // No UI – this route is used as an API endpoint.
-  component: () => null,
-  // Use the server.handlers API for POST requests (TanStack Start v0.4+)
-  server: {
-    handlers: {
-      POST: async ({ request }) => {
-        const { transferId, amount, currency, recipientEmail } = await request.json();
-        if (!paypalService.isConfigured()) {
-          return Response.json({ error: "PayPal Sandbox credentials are missing on the server (PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET)." }, { status: 503 });
-        }
-        let order;
-        try {
-          order = await paypalService.createSandboxOrder({ transferId, amount, currency, recipientEmail });
-        } catch (e) {
-          return Response.json({ error: e instanceof Error ? e.message : "PayPal order creation failed" }, { status: 502 });
-        }
-        // Respond with JSON containing orderId and approval URL
-        return new Response(JSON.stringify({ orderId: order.orderId, approveUrl: order.approveUrl }), {
-          headers: { "Content-Type": "application/json" },
-          status: 200,
-        });
-      },
-    },
-  },
-});
+export const createCheckout = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ transferId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: transfer, error } = await context.supabase.from("transfers")
+      .select("id,status,release_at,amount,currency,recipient_email")
+      .eq("id", data.transferId).eq("user_id", context.userId).single();
+    if (error || !transfer) throw new Error(error?.message ?? "Transfer not found.");
+    assertCheckoutEligible(transfer.status, transfer.release_at ?? undefined);
+    const order = await paypalService.createSandboxOrder({
+      transferId: transfer.id,
+      amount: Number(transfer.amount),
+      currency: transfer.currency,
+      recipientEmail: transfer.recipient_email,
+    });
+    if (!order.approveUrl) throw new Error("PayPal approval URL missing.");
+    return { approveUrl: order.approveUrl };
+  });
+
+export const Route = createFileRoute("/_shell/paypal/create")({ component: () => null });

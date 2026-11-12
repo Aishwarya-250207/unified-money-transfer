@@ -30,3 +30,4 @@ use the editor.
 <!-- LOVABLE:END -->
 
 - PayPal return capture runs in an authenticated server function after browser session restoration; route loaders are isomorphic and cannot use a raw Request or browser transfer store for server completion.
+- The pending page starts checkout through an authenticated server function that checks the database deadline and status; timers never mark payments completed because only the PayPal capture callback can do that.
