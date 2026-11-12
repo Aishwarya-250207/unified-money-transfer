@@ -24,6 +24,8 @@ export const Route = createFileRoute("/_shell/transfers/$id/review")({
       { name: "description", content: "Review recipient, verification and risk before confirming." },
       { property: "og:title", content: "Review payment — SafeSend" },
       { property: "og:description", content: "Final review before a protected transfer." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: () => {
@@ -51,23 +53,8 @@ function Review({ t }: { t: Transfer }) {
   async function confirm() {
     setBusy(true);
     try {
-      const resp = await fetch("/paypal/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          transferId: t.id,
-          amount: t.amount,
-          currency: t.currency,
-          recipientEmail: t.recipientEmail,
-        }),
-      });
-      if (!resp.ok) {
-        const err = await resp.text();
-        throw new Error(`PayPal order creation failed: ${resp.status} ${err}`);
-      }
-      const data = await resp.json();
-      if (!data.approveUrl) throw new Error("PayPal approval URL missing");
-      window.location.href = data.approveUrl;
+      if (t.status === "draft") await transferService.confirm(t.id);
+      await navigate({ to: "/transfers/$id/pending", params: { id: t.id } });
     } catch (e) {
       toast.error((e as Error).message);
       setBusy(false);

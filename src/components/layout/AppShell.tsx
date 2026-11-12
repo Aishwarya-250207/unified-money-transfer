@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { History, LayoutDashboard, LogOut, Menu, RotateCcw, Send, Shield } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
@@ -74,13 +74,6 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-
-  // Central ticker: releases pending transfers whose cancellation window elapsed.
-  useEffect(() => {
-    transferService.releaseDue().catch(() => {});
-    const id = setInterval(() => transferService.releaseDue().catch(() => {}), 1000);
-    return () => clearInterval(id);
-  }, []);
 
   return (
     <div className="min-h-screen lg:pl-64">
